@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <style>
+    body {
+      font-family: sans-serif;
+      padding: 0px 10px 10px 10px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+      table-layout: fixed;
+    }
+    thead {
+      background-color: #663399;     /* สีหัวตาราง */
+    }
+    tbody tr:nth-child(even) {
+      background-color: #E6E6FA;     /* แถวคู่ */
+    }
+    tbody tr:nth-child(odd) {
+      background-color: #ffffff;     /* แถวคี่ */
+    }
+    .today-row {
+      background-color: #FFF3CD !important; /* สีเหลืองอ่อน หรือปรับได้ */
+      font-weight: bold;
+    }
+    thead th {
+      color: #ffffff; /* สีม่วงเข้ม หรือเปลี่ยนเป็นสีที่คุณต้องการ */
+    }
+    th, td {
+      border: 1px solid #ccc;
+      padding: 0.2em;
+      text-align: center;
+    }
+    th.date-header, th.total-header {
+      font-size: 1em;
+      font-weight: bold;
+    }
+    th span {
+      display: block;
+      font-size: 0.6em;
+      color: #ffffff;
+    }
+    button {
+      padding: 1px 1px;
+      font-size: 11px;
+    }
+    :root{
+      --controls-gap: 5px;   /* แก้เลขนี้เมื่ออยากเปลี่ยนระยะห่าง */
+    }
+    .controls{
+      display:flex;
+      justify-content:flex-start;
+      align-items:center;
+      gap:var(--controls-gap);
+      margin-bottom:10px;
+    }
+    tbody td.total-column {
+  	  background-color: #ffdddd;
+	}
+    .count {
+      font-size: 10px;
+    }
+    /* ขนาดตัวเลขในช่องรวม */
+    td.sum {
+      font-size: 20px;
+    }
+    #monthYear {
+      font-size: 12px;
+	}
+    td:first-child {
+      font-size: 10px; /* ปรับขนาดได้ตามต้องการ */
+	}
+    .counter-btn {
+  	  padding: 0px 0px;
+  	  font-size: 6px;
+  	  line-height: 1;
+	}
+    /* ลดความกว้างคอลัมน์ที่ 5 */
+    th:nth-child(5),
+    td:nth-child(5) {
+      width: 12%;
+    }
+	th:nth-child(1),
+    td:nth-child(1) {
+      width: 13%;
+    }
+    /* กระจายความกว้างให้คอลัมน์ 1-4 มากขึ้น */
+    th:nth-child(2),
+    td:nth-child(2),
+    th:nth-child(3),
+    td:nth-child(3),
+    th:nth-child(4),
+    td:nth-child(4) {
+      width: 25%;
+    }
+  </style>
+</head>
+<body>
+  <div class="controls">
+    <button onclick="changeMonth(-1)">⬅ เดือนก่อน</button>
+    <h3 id="monthYear"></h3>
+    <button onclick="changeMonth(1)">เดือนถัดไป ➡</button>
+  </div>
+
+  <table id="logTable">
+    <thead>
+      <tr>
+        <th class="date-header">วันที่</th>
+        <th>เช้า<br><span>(6:00-12:00)</span></th>
+        <th>เที่ยง<br><span>(12:00-18:00)</span></th>
+        <th>เย็น<br><span>(18:00-24:00)</span></th>
+        <th class="total-header">รวม</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <script>
+    const tableBody = document.querySelector('#logTable tbody');
+    const monthYearDisplay = document.getElementById('monthYear');
+    let currentDate = new Date();
+
+    function daysInMonth(year, month) {
+      return new Date(year, month + 1, 0).getDate();
+    }
+
+    function renderTable(year, month) {
+      tableBody.innerHTML = '';
+      const days = daysInMonth(year, month);
+      monthYearDisplay.textContent = new Date(year, month).toLocaleString('th-TH', {
+        month: 'long',
+        year: 'numeric'
+      });
+      const today = new Date();
+      for (let day = 1; day <= days; day++) {
+        const row = document.createElement('tr');
+        const date = new Date(year, month, day);
+        const dateStr = date.toLocaleDateString('th-TH', {
+          day: '2-digit',
+          month: '2-digit',
+
+        });
+
+        row.innerHTML = `
+          <td>${dateStr}</td>
+          ${[0,1,2].map(i => `
+            <td>
+              <button class="counter-btn" onclick="updateCount(this, -1)">-</button>
+              <span class="count">0</span>
+              <button class="counter-btn" onclick="updateCount(this, 1)">+</button>
+            </td>
+          `).join('')}
+          <td class="total-column sum">0</td>   <!-- เพิ่ม class total-column -->
+        `;
+
+        tableBody.appendChild(row);
+      }
+    }
+
+    function updateCount(button, delta) {
+      const countSpan = button.parentElement.querySelector('.count');
+      let value = parseInt(countSpan.textContent);
+      value = Math.max(0, value + delta);
+      countSpan.textContent = value;
+
+      // Update sum
+      const row = button.closest('tr');
+      const counts = row.querySelectorAll('.count');
+      const total = [...counts].reduce((sum, c) => sum + parseInt(c.textContent), 0);
+      row.querySelector('.sum').textContent = total;
+    }
+
+    function changeMonth(offset) {
+      currentDate.setMonth(currentDate.getMonth() + offset);
+      renderTable(currentDate.getFullYear(), currentDate.getMonth());
+    }
+
+    // Initial render
+    renderTable(currentDate.getFullYear(), currentDate.getMonth());
+  </script>
+</body>
+</html>
