@@ -181,6 +181,62 @@
 
     // Initial render
     renderTable(currentDate.getFullYear(), currentDate.getMonth());
+	  
+    // รับข้อมูลจาก parent (Wix Velo)
+    window.addEventListener('message', (event) => {
+  	const msg = event.data;
+  	if (msg.type === 'loadData') {
+    	    populateTable(msg.payload);  // ฟังก์ชันเติมข้อมูลตารางจาก Google Sheet
+  	}
+    });
+
+    // ฟังก์ชันเติมข้อมูลตาราง
+    function populateTable(data) {
+  	if (!data || !Array.isArray(data)) return;
+  	const rows = tableBody.querySelectorAll('tr');
+  	rows.forEach(row => {
+    	    const dateCell = row.cells[0].textContent.trim();
+    	    const record = data.find(item => item.date === dateCell);
+    	    if (record) {
+      		for(let i=0; i<3; i++) {
+        	    const countSpan = row.cells[i+1].querySelector('.count');
+        	    countSpan.textContent = record[`col${i+2}`] || 0;
+      		}
+      		const totalCell = row.cells[4];
+      		const total = (record.col2||0) + (record.col3||0) + (record.col4||0);
+      		totalCell.textContent = total;
+    	    }
+  	});
+    }
+
+    // แก้ไขฟังก์ชัน updateCount ให้ส่งข้อมูลกลับ Wix เมื่อมีการเปลี่ยนแปลง
+    function updateCount(button, delta) {
+  	const countSpan = button.parentElement.querySelector('.count');
+  	let value = parseInt(countSpan.textContent);
+  	value = Math.max(0, value + delta);
+  	countSpan.textContent = value;
+
+  	// Update sum
+  	const row = button.closest('tr');
+  	const counts = row.querySelectorAll('.count');
+  	const total = [...counts].reduce((sum, c) => sum + parseInt(c.textContent), 0);
+  	row.querySelector('.sum').textContent = total;
+
+  	// ส่งข้อมูลกลับ Wix ว่ามีการเปลี่ยนแปลง
+  	const date = row.cells[0].textContent.trim();
+  	const dataToSend = {
+    	    type: 'dataChanged',
+	    payload: {
+      		date: date,
+      		username: '',  // Wix จะเติมเอง, หรือส่งชื่อผ่าน postMessage ตอนโหลด
+      		col2: parseInt(row.cells[1].querySelector('.count').textContent),
+      		col3: parseInt(row.cells[2].querySelector('.count').textContent),
+      		col4: parseInt(row.cells[3].querySelector('.count').textContent),
+      		total: total
+    	    }
+  	};
+  	parent.postMessage(dataToSend, '*');
+    }
   </script>
 </body>
 </html>
