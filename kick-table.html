@@ -237,6 +237,40 @@
   	};
   	parent.postMessage(dataToSend, '*');
     }
+
+
+	  
+	  function updateCount(button, delta) {
+  const countSpan = button.parentElement.querySelector('.count');
+  let value = parseInt(countSpan.textContent);
+  value = Math.max(0, value + delta);
+  countSpan.textContent = value;
+
+  const row = button.closest('tr');
+  const counts = row.querySelectorAll('.count');
+  const total = [...counts].reduce((sum, c) => sum + parseInt(c.textContent), 0);
+  row.querySelector('.sum').textContent = total;
+
+  // เตรียมข้อมูลส่งกลับ
+  const date = row.cells[0].textContent.trim();
+  const dataToSend = {
+    type: 'dataChanged',
+    payload: {
+      date: date,
+      username: 'test-debug', // ทดสอบชั่วคราว
+      col2: parseInt(row.cells[1].querySelector('.count').textContent),
+      col3: parseInt(row.cells[2].querySelector('.count').textContent),
+      col4: parseInt(row.cells[3].querySelector('.count').textContent),
+      total: total
+    }
+  };
+
+  console.log('📤 sending to parent:', dataToSend); // <== เช็กว่าถูกส่งไหม
+  parent.postMessage(dataToSend, '*');
+}
+
+
+	  
   </script>
 </body>
 </html>
